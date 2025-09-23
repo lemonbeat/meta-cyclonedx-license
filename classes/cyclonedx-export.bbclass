@@ -68,16 +68,18 @@ python do_cyclonedx_package_collect() {
         if pn.endswith(ignored_suffix):
             return
 
-    # get all CVE product names and version from the recipe
+    # get all CVE product names,version and licenses from the recipe
     name = d.getVar("CVE_PRODUCT")
     version = d.getVar("CVE_VERSION")
+    license_str_raw = d.getVar("LICENSE")
+    license_str = license_str_raw.replace("&", "AND").replace("|", "OR").replace("(", "").replace(")", "").strip()
 
     # We create and populate a per-recipe partial sbom which will be added to the sstate cache
     pn_list = {}
     pn_list["pkgs"] = []
     cves = []
     # append all defined package names for recipe to pn_list pkgs
-    for pkg in generate_packages_list(name, version):
+    for pkg in generate_packages_list(name, version, license_str):
         if not next((c for c in pn_list["pkgs"] if c["cpe"] == pkg["cpe"]), None):
             pn_list["pkgs"].append(pkg)
             bom_ref = pkg["bom-ref"]
@@ -196,7 +198,7 @@ def resolve_dependency_ref(depends, bom_ref_map, alias_map):
     # Return None if no solution found
     return None
 
-def generate_packages_list(products_names, version):
+def generate_packages_list(products_names, version,license_str=None):
     """
     Get a list of products and generate CPE and PURL identifiers for each of them.
     """
@@ -227,6 +229,14 @@ def generate_packages_list(products_names, version):
         }
         if vendor != "":
             pkg["group"] = vendor
+
+        # add licenses
+        if license_str:
+            pkg["licenses"] = [
+                        {
+                            "expression": license_str
+                        }
+            ]
         packages.append(pkg)
     return packages
 
