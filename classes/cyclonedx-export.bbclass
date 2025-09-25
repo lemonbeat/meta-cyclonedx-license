@@ -56,7 +56,7 @@ python do_cyclonedx_package_collect() {
     pn_list["pkgs"] = []
     cves = []
     # append all defined package names for recipe to pn_list pkgs
-    for pkg in generate_packages_list(name, version):
+    for pkg in generate_packages_list(name, version,license_str):
         if not next((c for c in pn_list["pkgs"] if c["cpe"] == pkg["cpe"]), None):
             pn_list["pkgs"].append(pkg)
             bom_ref = pkg["bom-ref"]
